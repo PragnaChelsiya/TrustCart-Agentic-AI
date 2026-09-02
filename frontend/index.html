@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>TrustCart</title>
+<style>
+  :root{
+    --paper:#FAFAF8; --ink:#1B1D1B; --muted:#6B6F6A;
+    --teal:#0E6E5C; --amber:#B8863A; --line:#E1DED4;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;
+    line-height:1.5;
+  }
+  .wrap{max-width:680px; margin:0 auto; padding:56px 24px 120px;}
+  h1{
+    font-family:Georgia,'Times New Roman',serif;
+    font-size:34px; font-weight:600; margin:0 0 4px;
+  }
+  .tagline{color:var(--muted); font-size:15px; margin:0 0 40px;}
+
+  .searchbar{
+    display:flex; gap:8px; border:1px solid var(--line);
+    padding:14px; background:#fff;
+  }
+  .searchbar input{
+    border:none; outline:none; font-size:15px; font-family:inherit;
+    background:transparent; color:var(--ink);
+  }
+  .searchbar input#query{flex:2;}
+  .searchbar input#budget{flex:1; text-align:right;}
+  .searchbar button{
+    border:none; background:var(--ink); color:var(--paper);
+    padding:0 20px; font-size:14px; cursor:pointer; font-family:inherit;
+  }
+  .searchbar button:hover{background:var(--teal);}
+
+  .status{color:var(--muted); font-size:14px; margin-top:16px;}
+
+  .verdict{
+    margin-top:40px; padding-top:32px; border-top:1px solid var(--line);
+    display:none;
+  }
+  .verdict.show{display:block;}
+  .verdict-label{color:var(--muted); font-size:13px; margin:0 0 6px;}
+  .verdict-name{
+    font-family:Georgia,'Times New Roman',serif; font-size:26px;
+    margin:0 0 6px; font-weight:600;
+  }
+  .verdict-price{font-size:17px; color:var(--muted); margin:0 0 24px;}
+
+  .confidence{display:flex; align-items:baseline; gap:14px; margin-bottom:28px;}
+  .confidence-score{font-size:48px; font-weight:700; font-family:Georgia,serif;}
+  .confidence-score.high{color:var(--teal);}
+  .confidence-score.low{color:var(--amber);}
+  .confidence-label{color:var(--muted); font-size:14px;}
+
+  .breakdown{list-style:none; padding:0; margin:0 0 32px; border-top:1px solid var(--line);}
+  .breakdown li{
+    padding:12px 0; border-bottom:1px solid var(--line);
+    display:flex; justify-content:space-between; gap:16px; font-size:14px;
+  }
+  .breakdown .factor{color:var(--ink);}
+  .breakdown .reason{color:var(--muted); text-align:right;}
+  .breakdown .score{font-variant-numeric:tabular-nums; color:var(--muted); min-width:38px;}
+
+  h2{font-size:14px; text-transform:none; color:var(--muted); margin:32px 0 12px; font-weight:600;}
+
+  .audit{list-style:none; padding:0; margin:0; border-left:2px solid var(--line);}
+  .audit li{padding:0 0 18px 18px; position:relative; font-size:14px;}
+  .audit li::before{
+    content:''; position:absolute; left:-5px; top:4px;
+    width:8px; height:8px; border-radius:50%; background:var(--teal);
+  }
+  .audit .step-detail{color:var(--ink);}
+  .audit .step-time{color:var(--muted); font-size:12px; margin-top:2px;}
+
+  table{width:100%; border-collapse:collapse; font-size:14px; margin-top:8px;}
+  th,td{text-align:left; padding:10px 8px; border-bottom:1px solid var(--line);}
+  th{color:var(--muted); font-weight:600; font-size:12px;}
+  tr.winner-row{background:#F1F7F5;}
+  .stock-no{color:var(--amber);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>TrustCart</h1>
+  <p class="tagline">Finds the best deal — and shows exactly why it trusts the pick.</p>
+
+  <div class="searchbar">
+    <input id="query" type="text" placeholder="What are you shopping for?" value="laptop">
+    <input id="budget" type="number" placeholder="Budget (₹)" value="60000">
+    <button onclick="findDeal()">Search</button>
+  </div>
+  <p class="status" id="status"></p>
+
+  <div class="verdict" id="verdict">
+    <p class="verdict-label">Recommended pick</p>
+    <p class="verdict-name" id="w-name"></p>
+    <p class="verdict-price" id="w-price"></p>
+
+    <div class="confidence">
+      <div class="confidence-score" id="score"></div>
+      <div class="confidence-label">confidence, based on price, freshness &amp; sample size</div>
+    </div>
+    <ul class="breakdown" id="breakdown"></ul>
+
+    <h2>Decision trail</h2>
+    <ul class="audit" id="audit"></ul>
+
+    <h2>All offers compared</h2>
+    <table>
+      <thead><tr><th>Store</th><th>Item</th><th>Total cost</th><th>Stock</th></tr></thead>
+      <tbody id="offers"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+async function findDeal(){
+  const query = document.getElementById('query').value.trim();
+  const budget = document.getElementById('budget').value;
+  const statusEl = document.getElementById('status');
+  const verdictEl = document.getElementById('verdict');
+
+  if(!query){ statusEl.textContent = 'Enter something to search for.'; return; }
+
+  verdictEl.classList.remove('show');
+  statusEl.textContent = 'Searching stores…';
+
+  try{
+    const url = `http://localhost:8000/find-best-deal?query=${encodeURIComponent(query)}` +
+                (budget ? `&budget=${encodeURIComponent(budget)}` : '');
+    const res = await fetch(url);
+    if(!res.ok) throw new Error('Server error ' + res.status);
+    const data = await res.json();
+
+    if(!data.winner){
+      statusEl.textContent = 'No offer found in stock within that budget.';
+      return;
+    }
+    statusEl.textContent = '';
+    render(data);
+  }catch(err){
+    statusEl.textContent = 'Could not reach TrustCart backend. Is main.py running on port 8000?';
+    console.error(err);
+  }
+}
+
+function render(data){
+  document.getElementById('w-name').textContent = data.winner.name;
+  document.getElementById('w-price').textContent =
+    `${data.winner.store} · ₹${data.winner.total_cost.toLocaleString('en-IN')} total`;
+
+  const score = data.confidence.overall_score;
+  const scoreEl = document.getElementById('score');
+  scoreEl.textContent = score + '/100';
+  scoreEl.className = 'confidence-score ' + (score >= 60 ? 'high' : 'low');
+
+  const bList = document.getElementById('breakdown');
+  bList.innerHTML = '';
+  data.confidence.breakdown.forEach(b=>{
+    const li = document.createElement('li');
+    li.innerHTML = `<span class="factor">${b.factor}</span>
+                     <span class="reason">${b.reason}</span>
+                     <span class="score">${b.score}</span>`;
+    bList.appendChild(li);
+  });
+
+  const aList = document.getElementById('audit');
+  aList.innerHTML = '';
+  data.audit_log.forEach(step=>{
+    const li = document.createElement('li');
+    const time = new Date(step.timestamp).toLocaleTimeString();
+    li.innerHTML = `<div class="step-detail">${step.detail}</div>
+                     <div class="step-time">${time}</div>`;
+    aList.appendChild(li);
+  });
+
+  const oBody = document.getElementById('offers');
+  oBody.innerHTML = '';
+  data.offers.forEach(o=>{
+    const tr = document.createElement('tr');
+    if(o.id === data.winner.id) tr.className = 'winner-row';
+    tr.innerHTML = `<td>${o.store}</td><td>${o.name}</td>
+                     <td>₹${o.total_cost.toLocaleString('en-IN')}</td>
+                     <td class="${o.in_stock ? '' : 'stock-no'}">${o.in_stock ? 'In stock' : 'Out of stock'}</td>`;
+    oBody.appendChild(tr);
+  });
+
+  document.getElementById('verdict').classList.add('show');
+}
+
+// Run an initial search on load
+findDeal();
+</script>
+</body>
+</html>

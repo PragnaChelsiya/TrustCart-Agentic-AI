@@ -5,87 +5,171 @@
 <title>TrustCart</title>
 <style>
   :root{
-    --paper:#FAFAF8; --ink:#1B1D1B; --muted:#6B6F6A;
-    --teal:#0E6E5C; --amber:#B8863A; --line:#E1DED4;
+    --bg:#0B0E13; --panel:#12161D; --panel-2:#161B24;
+    --ink:#F2F4F7; --muted:#8B93A1;
+    --teal:#22D3AA; --violet:#8B7CF6; --amber:#FFB454; --red:#FF6B6B;
+    --line:#232935;
+    --grad: linear-gradient(135deg, var(--teal), var(--violet));
   }
   *{box-sizing:border-box;}
   body{
-    margin:0; background:var(--paper); color:var(--ink);
+    margin:0; background:var(--bg); color:var(--ink);
     font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;
     line-height:1.5;
+    min-height:100vh;
+    position:relative;
+    overflow-x:hidden;
   }
-  .wrap{max-width:680px; margin:0 auto; padding:56px 24px 120px;}
+  body::before{
+    content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
+    background-image:
+      linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px);
+    background-size:44px 44px;
+    mask-image:radial-gradient(ellipse 80% 60% at 50% 0%, black 40%, transparent 90%);
+  }
+  body::after{
+    content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
+    background-image:
+      radial-gradient(circle at 12% -5%, rgba(139,124,246,.30), transparent 42%),
+      radial-gradient(circle at 88% 8%, rgba(34,211,170,.26), transparent 42%),
+      radial-gradient(circle at 50% 110%, rgba(139,124,246,.14), transparent 50%);
+    animation:drift 16s ease-in-out infinite alternate;
+  }
+  @keyframes drift{
+    0%{ transform:translateY(0) scale(1); }
+    100%{ transform:translateY(-18px) scale(1.04); }
+  }
+  .wrap{max-width:800px; margin:0 auto; padding:56px 24px 120px; position:relative; z-index:1;}
+
+  .brand{display:flex; align-items:center; gap:10px; margin-bottom:6px;}
+  .brand-dot{width:10px; height:10px; border-radius:50%; background:var(--grad); box-shadow:0 0 12px rgba(34,211,170,.7);}
   h1{
-    font-family:Georgia,'Times New Roman',serif;
-    font-size:34px; font-weight:600; margin:0 0 4px;
+    font-size:34px; font-weight:800; margin:0;
+    background:var(--grad); -webkit-background-clip:text; background-clip:text; color:transparent;
+    letter-spacing:-0.5px;
   }
-  .tagline{color:var(--muted); font-size:15px; margin:0 0 40px;}
+  .tagline{color:var(--muted); font-size:15px; margin:8px 0 28px;}
 
   .searchbar{
-    display:flex; gap:8px; border:1px solid var(--line);
-    padding:14px; background:#fff;
+    display:flex; gap:10px; border:1px solid var(--line); border-radius:14px;
+    padding:6px; background:rgba(18,22,29,.72); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.02), 0 8px 30px rgba(0,0,0,.2);
   }
   .searchbar input{
     border:none; outline:none; font-size:15px; font-family:inherit;
-    background:transparent; color:var(--ink);
+    background:transparent; color:var(--ink); padding:12px 14px; border-radius:10px;
   }
   .searchbar input#query{flex:2;}
   .searchbar input#budget{flex:1; text-align:right;}
+  .searchbar input::placeholder{color:var(--muted);}
   .searchbar button{
-    border:none; background:var(--ink); color:var(--paper);
-    padding:0 20px; font-size:14px; cursor:pointer; font-family:inherit;
+    border:none; background:var(--grad); color:#08110E;
+    padding:0 24px; font-size:14px; font-weight:700; cursor:pointer; font-family:inherit;
+    border-radius:10px; transition:transform .15s ease, filter .15s ease;
   }
-  .searchbar button:hover{background:var(--teal);}
+  .searchbar button:hover{filter:brightness(1.08);}
+  .searchbar button:active{transform:scale(.97);}
 
-  .status{color:var(--muted); font-size:14px; margin-top:16px;}
+  .chips{display:flex; gap:8px; margin-top:14px; flex-wrap:wrap;}
+  .chip{
+    border:1px solid var(--line); background:var(--panel); color:var(--muted);
+    font-size:13px; padding:7px 16px; cursor:pointer; border-radius:999px;
+    transition:all .15s ease;
+  }
+  .chip:hover{border-color:var(--teal); color:var(--teal); box-shadow:0 0 0 1px var(--teal) inset;}
+
+  .status{color:var(--muted); font-size:14px; margin-top:16px; min-height:20px;}
+  .status.error{color:var(--red);}
+
+  .skeleton{display:none; margin-top:40px;}
+  .skeleton.show{display:block;}
+  .sk-line{background:linear-gradient(90deg,#161B24 25%,#1D2330 37%,#161B24 63%);
+    background-size:400% 100%; animation:shimmer 1.4s ease infinite; border-radius:8px;}
+  @keyframes shimmer{0%{background-position:100% 0;}100%{background-position:-100% 0;}}
 
   .verdict{
-    margin-top:40px; padding-top:32px; border-top:1px solid var(--line);
-    display:none;
+    margin-top:40px; display:none; opacity:0; transform:translateY(8px);
+    transition:opacity .4s ease, transform .4s ease;
   }
   .verdict.show{display:block;}
-  .verdict-label{color:var(--muted); font-size:13px; margin:0 0 6px;}
-  .verdict-name{
-    font-family:Georgia,'Times New Roman',serif; font-size:26px;
-    margin:0 0 6px; font-weight:600;
-  }
-  .verdict-price{font-size:17px; color:var(--muted); margin:0 0 24px;}
+  .verdict.show.in{opacity:1; transform:translateY(0);}
 
-  .confidence{display:flex; align-items:baseline; gap:14px; margin-bottom:28px;}
-  .confidence-score{font-size:48px; font-weight:700; font-family:Georgia,serif;}
-  .confidence-score.high{color:var(--teal);}
-  .confidence-score.low{color:var(--amber);}
-  .confidence-label{color:var(--muted); font-size:14px;}
-
-  .breakdown{list-style:none; padding:0; margin:0 0 32px; border-top:1px solid var(--line);}
-  .breakdown li{
-    padding:12px 0; border-bottom:1px solid var(--line);
-    display:flex; justify-content:space-between; gap:16px; font-size:14px;
+  .card{
+    background:rgba(18,22,29,.72); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+    border:1px solid var(--line); border-radius:16px;
+    padding:28px; margin-bottom:20px;
+    box-shadow:0 8px 30px rgba(0,0,0,.25);
   }
-  .breakdown .factor{color:var(--ink);}
+
+  .verdict-label{color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:1px; margin:0 0 10px;}
+  .verdict-name{font-size:26px; margin:0 0 6px; font-weight:800;}
+  .verdict-price{font-size:16px; color:var(--muted); margin:0 0 24px;}
+
+  .gauge-row{display:flex; align-items:center; gap:28px;}
+  .gauge{position:relative; width:120px; height:120px; flex-shrink:0;}
+  .gauge svg{transform:rotate(-90deg); filter:drop-shadow(0 0 10px rgba(34,211,170,.35));}
+  .gauge-track{fill:none; stroke:var(--line); stroke-width:9;}
+  .gauge-fill{fill:none; stroke:url(#gaugeGrad); stroke-width:9; stroke-linecap:round;
+    stroke-dasharray:320; stroke-dashoffset:320; transition:stroke-dashoffset 1.1s cubic-bezier(.4,0,.2,1);}
+  .gauge-fill.low{stroke:var(--amber); filter:none;}
+  .gauge-num{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-size:26px; font-weight:800;
+  }
+  .gauge-caption{color:var(--muted); font-size:14px; max-width:380px;}
+
+  .breakdown{list-style:none; padding:0; margin:24px 0 0;}
+  .breakdown li{padding:14px 0; border-top:1px solid var(--line); font-size:14px;}
+  .breakdown .row{display:flex; justify-content:space-between; gap:16px; margin-bottom:8px;}
+  .breakdown .factor{color:var(--ink); font-weight:600;}
   .breakdown .reason{color:var(--muted); text-align:right;}
-  .breakdown .score{font-variant-numeric:tabular-nums; color:var(--muted); min-width:38px;}
+  .bar-track{height:5px; background:var(--line); border-radius:3px; overflow:hidden;}
+  .bar-fill{height:100%; background:var(--grad); width:0; transition:width .9s ease; border-radius:3px;}
+  .bar-fill.low{background:var(--amber);}
 
-  h2{font-size:14px; text-transform:none; color:var(--muted); margin:32px 0 12px; font-weight:600;}
+  h2{font-size:13px; text-transform:uppercase; letter-spacing:1px; color:var(--muted); margin:0 0 16px; font-weight:700;}
 
   .audit{list-style:none; padding:0; margin:0; border-left:2px solid var(--line);}
-  .audit li{padding:0 0 18px 18px; position:relative; font-size:14px;}
+  .audit li{padding:0 0 4px 20px; position:relative; font-size:14px; cursor:pointer;}
   .audit li::before{
-    content:''; position:absolute; left:-5px; top:4px;
-    width:8px; height:8px; border-radius:50%; background:var(--teal);
+    content:''; position:absolute; left:-6px; top:8px;
+    width:10px; height:10px; border-radius:50%; background:var(--grad);
+    box-shadow:0 0 8px rgba(34,211,170,.6);
   }
-  .audit .step-detail{color:var(--ink);}
-  .audit .step-time{color:var(--muted); font-size:12px; margin-top:2px;}
+  .audit .step-head{display:flex; justify-content:space-between; align-items:baseline; padding:10px 0;}
+  .audit .step-detail{color:var(--ink); font-weight:500;}
+  .audit .step-time{color:var(--muted); font-size:12px; white-space:nowrap; margin-left:12px;}
+  .audit .step-extra{
+    max-height:0; overflow:hidden; color:var(--muted); font-size:13px;
+    transition:max-height .25s ease, padding .25s ease;
+  }
+  .audit li.open .step-extra{max-height:60px; padding-bottom:12px;}
+  .audit li:hover .step-detail{color:var(--teal);}
+  .audit code{background:var(--panel-2); padding:2px 6px; border-radius:4px; color:var(--violet);}
 
-  table{width:100%; border-collapse:collapse; font-size:14px; margin-top:8px;}
-  th,td{text-align:left; padding:10px 8px; border-bottom:1px solid var(--line);}
-  th{color:var(--muted); font-weight:600; font-size:12px;}
-  tr.winner-row{background:#F1F7F5;}
-  .stock-no{color:var(--amber);}
+  .table-controls{display:flex; gap:8px; margin:0 0 14px;}
+  .sort-btn{
+    border:1px solid var(--line); background:var(--panel-2); color:var(--muted);
+    font-size:12px; padding:6px 14px; cursor:pointer; border-radius:999px;
+  }
+  .sort-btn.active{border-color:var(--teal); color:var(--teal); box-shadow:0 0 0 1px var(--teal) inset;}
+
+  table{width:100%; border-collapse:collapse; font-size:14px;}
+  th,td{text-align:left; padding:12px 10px; border-bottom:1px solid var(--line);}
+  th{color:var(--muted); font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:.5px;}
+  tbody tr{transition:background .15s ease;}
+  tbody tr:hover{background:var(--panel-2);}
+  tr.winner-row{background:rgba(34,211,170,.08);}
+  tr.winner-row td:first-child{position:relative;}
+  tr.winner-row td:first-child::before{content:'★ '; color:var(--teal);}
+  .stock-no{color:var(--red);}
+  .stock-yes{color:var(--teal);}
 </style>
 </head>
 <body>
 <div class="wrap">
+  <div class="brand"><div class="brand-dot"></div><span style="color:var(--muted); font-size:13px; letter-spacing:1px; text-transform:uppercase;">Agentic Commerce</span></div>
   <h1>TrustCart</h1>
   <p class="tagline">Finds the best deal — and shows exactly why it trusts the pick.</p>
 
@@ -94,40 +178,87 @@
     <input id="budget" type="number" placeholder="Budget (₹)" value="60000">
     <button onclick="findDeal()">Search</button>
   </div>
+  <div class="chips">
+    <div class="chip" onclick="quickSearch('laptop', 60000)">💻 Laptop under ₹60k</div>
+<div class="chip" onclick="quickSearch('phone', 30000)">📱 Phone under ₹30k</div>
+<div class="chip" onclick="quickSearch('headphone', 5000)">🎧 Headphones under ₹5k</div>
+<div class="chip" onclick="quickSearch('watch', 7000)">⌚ Smartwatch under ₹7k</div>
+</div>
   <p class="status" id="status"></p>
 
+  <div class="skeleton" id="skeleton">
+    <div class="sk-line" style="height:120px; width:100%; margin-bottom:14px;"></div>
+    <div class="sk-line" style="height:60px; width:100%;"></div>
+  </div>
+
   <div class="verdict" id="verdict">
-    <p class="verdict-label">Recommended pick</p>
-    <p class="verdict-name" id="w-name"></p>
-    <p class="verdict-price" id="w-price"></p>
+    <div class="card">
+      <p class="verdict-label">Recommended pick</p>
+      <p class="verdict-name" id="w-name"></p>
+      <p class="verdict-price" id="w-price"></p>
 
-    <div class="confidence">
-      <div class="confidence-score" id="score"></div>
-      <div class="confidence-label">confidence, based on price, freshness &amp; sample size</div>
+      <div class="gauge-row">
+        <div class="gauge">
+          <svg width="120" height="120" viewBox="0 0 120 120">
+            <defs>
+              <linearGradient id="gaugeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#22D3AA"/>
+                <stop offset="100%" stop-color="#8B7CF6"/>
+              </linearGradient>
+            </defs>
+            <circle class="gauge-track" cx="60" cy="60" r="51"></circle>
+            <circle class="gauge-fill" id="gauge-fill" cx="60" cy="60" r="51"></circle>
+          </svg>
+          <div class="gauge-num" id="gauge-num">0</div>
+        </div>
+        <p class="gauge-caption">Confidence score — computed from price competitiveness, data freshness, and how many offers were compared. Not an LLM guess.</p>
+      </div>
+
+      <ul class="breakdown" id="breakdown"></ul>
     </div>
-    <ul class="breakdown" id="breakdown"></ul>
 
-    <h2>Decision trail</h2>
-    <ul class="audit" id="audit"></ul>
+    <div class="card">
+      <h2>Decision trail — click a step for detail</h2>
+      <ul class="audit" id="audit"></ul>
+    </div>
 
-    <h2>All offers compared</h2>
-    <table>
-      <thead><tr><th>Store</th><th>Item</th><th>Total cost</th><th>Stock</th></tr></thead>
-      <tbody id="offers"></tbody>
-    </table>
+    <div class="card">
+      <h2>All offers compared</h2>
+      <div class="table-controls">
+        <button class="sort-btn active" data-sort="price" onclick="setSort('price')">Sort: Price</button>
+        <button class="sort-btn" data-sort="store" onclick="setSort('store')">Sort: Store</button>
+        <button class="sort-btn" data-sort="stock" onclick="setSort('stock')">Sort: Stock</button>
+      </div>
+      <table>
+        <thead><tr><th>Store</th><th>Item</th><th>Total cost</th><th>Stock</th></tr></thead>
+        <tbody id="offers"></tbody>
+      </table>
+    </div>
   </div>
 </div>
 
 <script>
+let lastData = null;
+let currentSort = 'price';
+
+function quickSearch(q, budget){
+  document.getElementById('query').value = q;
+  document.getElementById('budget').value = budget;
+  findDeal();
+}
+
 async function findDeal(){
   const query = document.getElementById('query').value.trim();
   const budget = document.getElementById('budget').value;
   const statusEl = document.getElementById('status');
   const verdictEl = document.getElementById('verdict');
+  const skeletonEl = document.getElementById('skeleton');
 
+  statusEl.className = 'status';
   if(!query){ statusEl.textContent = 'Enter something to search for.'; return; }
 
-  verdictEl.classList.remove('show');
+  verdictEl.classList.remove('show','in');
+  skeletonEl.classList.add('show');
   statusEl.textContent = 'Searching stores…';
 
   try{
@@ -137,13 +268,18 @@ async function findDeal(){
     if(!res.ok) throw new Error('Server error ' + res.status);
     const data = await res.json();
 
+    skeletonEl.classList.remove('show');
+
     if(!data.winner){
       statusEl.textContent = 'No offer found in stock within that budget.';
       return;
     }
     statusEl.textContent = '';
+    lastData = data;
     render(data);
   }catch(err){
+    skeletonEl.classList.remove('show');
+    statusEl.className = 'status error';
     statusEl.textContent = 'Could not reach TrustCart backend. Is main.py running on port 8000?';
     console.error(err);
   }
@@ -155,17 +291,27 @@ function render(data){
     `${data.winner.store} · ₹${data.winner.total_cost.toLocaleString('en-IN')} total`;
 
   const score = data.confidence.overall_score;
-  const scoreEl = document.getElementById('score');
-  scoreEl.textContent = score + '/100';
-  scoreEl.className = 'confidence-score ' + (score >= 60 ? 'high' : 'low');
+  const isLow = score < 60;
+
+  const fillEl = document.getElementById('gauge-fill');
+  fillEl.className = 'gauge-fill' + (isLow ? ' low' : '');
+  const circumference = 320;
+  const offset = circumference - (score/100)*circumference;
+  requestAnimationFrame(()=>{ fillEl.style.strokeDashoffset = offset; });
+
+  animateNumber(document.getElementById('gauge-num'), score);
 
   const bList = document.getElementById('breakdown');
   bList.innerHTML = '';
   data.confidence.breakdown.forEach(b=>{
     const li = document.createElement('li');
-    li.innerHTML = `<span class="factor">${b.factor}</span>
-                     <span class="reason">${b.reason}</span>
-                     <span class="score">${b.score}</span>`;
+    const barLow = b.score < 60;
+    li.innerHTML = `
+      <div class="row">
+        <span class="factor">${b.factor}</span>
+        <span class="reason">${b.reason} · ${b.score}</span>
+      </div>
+      <div class="bar-track"><div class="bar-fill${barLow?' low':''}" style="width:${b.score}%"></div></div>`;
     bList.appendChild(li);
   });
 
@@ -174,26 +320,63 @@ function render(data){
   data.audit_log.forEach(step=>{
     const li = document.createElement('li');
     const time = new Date(step.timestamp).toLocaleTimeString();
-    li.innerHTML = `<div class="step-detail">${step.detail}</div>
-                     <div class="step-time">${time}</div>`;
+    li.innerHTML = `
+      <div class="step-head">
+        <span class="step-detail">${step.detail}</span>
+        <span class="step-time">${time}</span>
+      </div>
+      <div class="step-extra">Step type: <code>${step.step}</code></div>`;
+    li.addEventListener('click', ()=> li.classList.toggle('open'));
     aList.appendChild(li);
   });
 
+  renderOffers(data);
+
+  const verdictEl = document.getElementById('verdict');
+  verdictEl.classList.add('show');
+  requestAnimationFrame(()=> verdictEl.classList.add('in'));
+}
+
+function animateNumber(el, target){
+  const duration = 900;
+  const startTime = performance.now();
+  function tick(now){
+    const progress = Math.min((now - startTime)/duration, 1);
+    const eased = 1 - Math.pow(1-progress, 3);
+    el.textContent = (target*eased).toFixed(1);
+    if(progress < 1) requestAnimationFrame(tick);
+    else el.textContent = target.toFixed(1);
+  }
+  requestAnimationFrame(tick);
+}
+
+function setSort(key){
+  currentSort = key;
+  document.querySelectorAll('.sort-btn').forEach(b=>{
+    b.classList.toggle('active', b.dataset.sort === key);
+  });
+  if(lastData) renderOffers(lastData);
+}
+
+function renderOffers(data){
   const oBody = document.getElementById('offers');
   oBody.innerHTML = '';
-  data.offers.forEach(o=>{
+  let offers = [...data.offers];
+
+  if(currentSort === 'price') offers.sort((a,b)=> a.total_cost - b.total_cost);
+  if(currentSort === 'store') offers.sort((a,b)=> a.store.localeCompare(b.store));
+  if(currentSort === 'stock') offers.sort((a,b)=> (b.in_stock - a.in_stock));
+
+  offers.forEach(o=>{
     const tr = document.createElement('tr');
     if(o.id === data.winner.id) tr.className = 'winner-row';
     tr.innerHTML = `<td>${o.store}</td><td>${o.name}</td>
                      <td>₹${o.total_cost.toLocaleString('en-IN')}</td>
-                     <td class="${o.in_stock ? '' : 'stock-no'}">${o.in_stock ? 'In stock' : 'Out of stock'}</td>`;
+                     <td class="${o.in_stock ? 'stock-yes' : 'stock-no'}">${o.in_stock ? 'In stock' : 'Out of stock'}</td>`;
     oBody.appendChild(tr);
   });
-
-  document.getElementById('verdict').classList.add('show');
 }
 
-// Run an initial search on load
 findDeal();
 </script>
 </body>

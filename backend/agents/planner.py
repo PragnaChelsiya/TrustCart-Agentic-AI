@@ -17,6 +17,7 @@ from models.product import Product
 STORE_ENDPOINTS = [
     "http://localhost:8001/search",
     "http://localhost:8002/search",
+    "http://localhost:8003/search",
 ]
 
 

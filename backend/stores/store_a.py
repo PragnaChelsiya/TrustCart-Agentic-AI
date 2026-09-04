@@ -24,9 +24,13 @@ FAKE_INVENTORY = [
 
 @app.get("/search")
 def search(query: str):
+    """Keyword search — matches product name substring OR exact category."""
     results = []
+    q = query.lower()
     for item in FAKE_INVENTORY:
-        if query.lower() in item["category"].lower():
+        category_match = q == item.get("category", "").lower()
+        name_match = q in item["name"].lower()
+        if category_match or name_match:
             item_without_category = {k: v for k, v in item.items() if k != "category"}
             product = Product(
                 **item_without_category,
